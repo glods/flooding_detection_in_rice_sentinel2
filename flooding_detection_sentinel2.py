@@ -57,6 +57,7 @@ def flooding_module(data_path_mndwi, data_path_cloud):
 
 """# Create dataframes"""
 
+
 def update_df(season, output_path, rgb_img, grid_path, area_name, operation, year, map_path):
     """
     This function updates the dataframe of flooding areas and dates.
@@ -74,23 +75,34 @@ def update_df(season, output_path, rgb_img, grid_path, area_name, operation, yea
     Returns:
     - None
     """
-  def cumulative(df,year, savepath):
-      '''
-      '''
-      columnsdate = [col for col in df.columns.to_list() if str(year) in col]
-      df = df.copy()
-      df = df.fillna(0)
-      list_ = columnsdate 
-      for i in range(len(list_)):
-          if i == 0:
-              df[list_[i]] = df[list_[i]]
-          else:
-              df[list_[i]] = df[list_[i - 1]] + df[list_[i]]
-      df.to_csv(savepath)
-      gdf1 = gpd.GeoDataFrame(df, geometry='geometry')
-      file = savepath.split('.')[0]
-      gdf1.to_file(file+'.geojson', driver = 'GeoJSON' )
-      return df
+
+
+    def cumulative(df,year, savepath):
+        '''
+        This function calculates the cumulative area of flooding for a given year and saves the result as a csv and geojson file.
+        Inputs:
+        - df: dataframe containing the flooding data
+        - year: the year for which the cumulative flooding area is calculated
+        - savepath: the filepath where the result will be saved
+        Outputs:
+        - df: the modified dataframe with the cumulative flooding area added
+        '''
+        # Select the columns with the flooding data for the given year
+        columnsdate = [col for col in df.columns.to_list() if str(year) in col]
+        df = df.copy()
+        df = df.fillna(0)
+        # Loop through the columns to calculate the cumulative flooding area
+        for i in range(len(columnsdate)):
+            if i == 0:
+                df[columnsdate[i]] = df[columnsdate[i]]
+            else:
+                df[columnsdate[i]] = df[columnsdate[i - 1]] + df[columnsdate[i]]
+        # Save the result as a csv and geojson file
+        df.to_csv(savepath)
+        gdf1 = gpd.GeoDataFrame(df, geometry='geometry')
+        file = savepath.split('.')[0]
+        gdf1.to_file(file+'.geojson', driver = 'GeoJSON' )
+        return df
 
     #---------------------------------------------------------------  
     savepath = output_path + "/dataframe/final_result"
@@ -106,8 +118,7 @@ def update_df(season, output_path, rgb_img, grid_path, area_name, operation, yea
         coldoy = stat_df1.columns [1:]
 
         coldate =  [from_doy_to_date(x, year) if x > 111 else from_doy_to_date(x + 256, year)  for x in coldoy  ]  #A year has a maximum of 366 days, so 366% 256 = 110
-    
-      
+     
         stat_df1 = stat_df1.rename( columns = dict(zip(coldoy ,  coldate)) )
         coldate.sort()
         stat_df1 =  stat_df1[coldate] * 100*0.0001
